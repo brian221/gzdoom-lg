@@ -1932,6 +1932,8 @@ DEFINE_FIELD_X(UserCmd, usercmd_t, roll)
 DEFINE_FIELD_X(UserCmd, usercmd_t, forwardmove)
 DEFINE_FIELD_X(UserCmd, usercmd_t, sidemove)
 DEFINE_FIELD_X(UserCmd, usercmd_t, upmove)
+DEFINE_FIELD_X(UserCmd, usercmd_t, cursor_x)
+DEFINE_FIELD_X(UserCmd, usercmd_t, cursor_y)
 
 DEFINE_FIELD(FPlayerClass, Type)
 DEFINE_FIELD(FPlayerClass, Flags)

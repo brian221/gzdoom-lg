@@ -72,6 +72,8 @@ struct usercmd_t
 	short	forwardmove;
 	short	sidemove;
 	short	upmove;
+	short	cursor_x;		// lightgun cursor screen X (-32768 to 32767, normalized)
+	short	cursor_y;		// lightgun cursor screen Y (-32768 to 32767, normalized)
 };
 
 // When transmitted, the above message is preceded by a byte
@@ -85,6 +87,7 @@ enum
 	UCMDF_SIDEMOVE		= 0x10,
 	UCMDF_UPMOVE		= 0x20,
 	UCMDF_ROLL			= 0x40,
+	UCMDF_CURSOR		= 0x80,
 };
 
 // When changing the following enum, be sure to update Net_SkipCommand()

@@ -41,6 +41,8 @@ struct UserCmd native
 	native int16	forwardmove;
 	native int16	sidemove;
 	native int16	upmove;
+	native int16	cursor_x;		// lightgun cursor X (normalized)
+	native int16	cursor_y;		// lightgun cursor Y (normalized)
 }
 
 class PlayerPawn : Actor

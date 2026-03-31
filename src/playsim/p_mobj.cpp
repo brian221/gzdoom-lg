@@ -120,6 +120,7 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj);
 
 EXTERN_CVAR (Int,  cl_rockettrails)
 EXTERN_CVAR (Bool, haptics_do_action)
+EXTERN_CVAR (Bool, cl_lightgun)
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -8078,6 +8079,24 @@ AActor *P_SpawnPlayerMissile (AActor *source, double x, double y, double z,
 			z = source->floorz;
 		}
 	}
+
+	// [Lightgun] Override missile aim direction with cursor position
+	if (cl_lightgun && source->player != NULL)
+	{
+		usercmd_t *cmd = &source->player->cmd;
+		if (cmd->cursor_x != 0 || cmd->cursor_y != 0)
+		{
+			double cx = cmd->cursor_x / 65535.0;
+			double cy = cmd->cursor_y / 65535.0;
+			double fov = source->player->FOV;
+			double aspectRatio = 16.0 / 9.0;
+			double vfov = fov / aspectRatio;
+
+			an = source->Angles.Yaw + DAngle::fromDeg(cx * fov);
+			pitch = source->Angles.Pitch + DAngle::fromDeg(-cy * vfov);
+		}
+	}
+
 	DVector3 pos = source->Vec2OffsetZ(x, y, z);
 	AActor *MissileActor = Spawn (source->Level, type, pos, ALLOW_REPLACE);
 	if (pMissileActor) *pMissileActor = MissileActor;

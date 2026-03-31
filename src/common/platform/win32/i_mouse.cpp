@@ -162,6 +162,7 @@ bool CursorState;
 
 CVAR (Bool, use_mouse,				true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, m_hidepointer,			true, 0)
+EXTERN_CVAR(Bool, cl_lightgun)
 
 CUSTOM_CVAR (Int, in_mouse, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
 {
@@ -259,6 +260,25 @@ void I_CheckNativeMouse(bool preferNative, bool eventhandlerresult)
 {
 	bool windowed = (screen == NULL) || !screen->IsFullscreen();
 	bool want_native;
+
+	// [Lightgun] In lightgun mode, show cursor and don't grab
+	if (cl_lightgun)
+	{
+		if (!NativeMouse)
+		{
+			NativeMouse = false; // Not truly native, but ungrabbed
+			if (Mouse != NULL)
+			{
+				Mouse->Ungrab();
+			}
+			if (!mouse_shown)
+			{
+				ShowCursor(true);
+				mouse_shown = true;
+			}
+		}
+		return;
+	}
 
 	if (!windowed)
 	{

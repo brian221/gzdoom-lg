@@ -40,6 +40,7 @@
 #include "c_buttons.h"
 #include "c_console.h"
 #include "c_cvars.h"
+#include "d_eventbase.h"
 #include "d_gui.h"
 #include "dikeys.h"
 #include "engineerrors.h"
@@ -55,6 +56,7 @@ bool GUICapture;
 static bool NativeMouse = true;
 
 CVAR (Bool,  use_mouse,				true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+EXTERN_CVAR(Bool, cl_lightgun)
 
 extern int WaitingForKey;
 
@@ -261,6 +263,19 @@ static void MouseRead ()
 		return;
 	}
 
+	// [Lightgun] In lightgun mode, read absolute cursor position
+	if (cl_lightgun)
+	{
+		SDL_GetMouseState(&x, &y);
+		// Scale from window coordinates to screen coordinates
+		if (screen != NULL)
+		{
+			screen->ScaleCoordsFromWindow(x, y);
+		}
+		PostMouseAbsolute(x, y);
+		return;
+	}
+
 	SDL_GetRelativeMouseState (&x, &y);
 	PostMouseMove (x, y);
 }
@@ -272,17 +287,33 @@ static void I_CheckNativeMouse ()
 	bool captureModeInGame = sysCallbacks.CaptureModeInGame && sysCallbacks.CaptureModeInGame();
 	bool wantNative = !focus || (!use_mouse || GUICapture || !captureModeInGame);
 
-	if (!wantNative && sysCallbacks.WantNativeMouse && sysCallbacks.WantNativeMouse())
-		wantNative = true;
+	// [Lightgun] Don't capture mouse in lightgun mode — we need absolute positioning
+	if (cl_lightgun && focus && !GUICapture)
+		wantNative = false; // Not native (we still want input), but don't use relative mode
 
 	if (wantNative != NativeMouse)
 	{
 		NativeMouse = wantNative;
-		SDL_ShowCursor (wantNative);
+		SDL_ShowCursor (wantNative || cl_lightgun);
 		if (wantNative)
 			I_ReleaseMouseCapture ();
+		else if (cl_lightgun)
+		{
+			// [Lightgun] Release relative mode but keep focus
+			SDL_SetRelativeMouseMode (SDL_FALSE);
+			SDL_ShowCursor (SDL_TRUE);
+		}
 		else
 			I_SetMouseCapture ();
+	}
+	// [Lightgun] Ensure cursor is visible and relative mode is off
+	else if (cl_lightgun && !NativeMouse)
+	{
+		if (SDL_GetRelativeMouseMode())
+		{
+			SDL_SetRelativeMouseMode (SDL_FALSE);
+			SDL_ShowCursor (SDL_TRUE);
+		}
 	}
 }
 

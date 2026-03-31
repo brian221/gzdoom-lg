@@ -53,6 +53,8 @@ FSerializer& Serialize(FSerializer& arc, const char* key, usercmd_t& cmd, usercm
 			("forwardmove", cmd.forwardmove)
 			("sidemove", cmd.sidemove)
 			("upmove", cmd.upmove)
+			("cursor_x", cmd.cursor_x)
+			("cursor_y", cmd.cursor_y)
 			.EndObject();
 	}
 	return arc;
@@ -109,6 +111,11 @@ void UnpackUserCmd(usercmd_t& cmd, const usercmd_t* basis, TArrayView<uint8_t>& 
 			cmd.upmove = ReadInt16(stream);
 		if (flags & UCMDF_ROLL)
 			cmd.roll = ReadInt16(stream);
+		if (flags & UCMDF_CURSOR)
+		{
+			cmd.cursor_x = ReadInt16(stream);
+			cmd.cursor_y = ReadInt16(stream);
+		}
 	}
 }
 
@@ -186,6 +193,12 @@ void PackUserCmd(const usercmd_t& cmd, const usercmd_t* basis, TArrayView<uint8_
 		flags |= UCMDF_ROLL;
 		WriteInt16(cmd.roll, stream);
 	}
+	if (cmd.cursor_x != basis->cursor_x || cmd.cursor_y != basis->cursor_y)
+	{
+		flags |= UCMDF_CURSOR;
+		WriteInt16(cmd.cursor_x, stream);
+		WriteInt16(cmd.cursor_y, stream);
+	}
 
 	// Write the packing bits
 	WriteInt8(flags, flagsPosition);
@@ -197,7 +210,8 @@ void WriteUserCmdMessage(const usercmd_t& cmd, const usercmd_t* basis, TArrayVie
 	{
 		if (cmd.buttons
 			|| cmd.pitch || cmd.yaw || cmd.roll
-			|| cmd.forwardmove || cmd.sidemove || cmd.upmove)
+			|| cmd.forwardmove || cmd.sidemove || cmd.upmove
+			|| cmd.cursor_x || cmd.cursor_y)
 		{
 			WriteInt8(DEM_USERCMD, stream);
 			PackUserCmd(cmd, basis, stream);
@@ -206,7 +220,8 @@ void WriteUserCmdMessage(const usercmd_t& cmd, const usercmd_t* basis, TArrayVie
 	}
 	else if (cmd.buttons != basis->buttons
 			|| cmd.yaw != basis->yaw || cmd.pitch != basis->pitch || cmd.roll != basis->roll
-			|| cmd.forwardmove != basis->forwardmove || cmd.sidemove != basis->sidemove || cmd.upmove != basis->upmove)
+			|| cmd.forwardmove != basis->forwardmove || cmd.sidemove != basis->sidemove || cmd.upmove != basis->upmove
+			|| cmd.cursor_x != basis->cursor_x || cmd.cursor_y != basis->cursor_y)
 	{
 		WriteInt8(DEM_USERCMD, stream);
 		PackUserCmd(cmd, basis, stream);
@@ -238,6 +253,8 @@ void SkipUserCmdMessage(TArrayView<uint8_t>& stream)
 				skip += 2;
 			if (stream[0] & UCMDF_ROLL)
 				skip += 2;
+			if (stream[0] & UCMDF_CURSOR)
+				skip += 4;
 			if (stream[0] & UCMDF_BUTTONS)
 			{
 				AdvanceStream(stream, 1);

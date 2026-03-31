@@ -33,6 +33,7 @@ void D_PostEvent (event_t* ev);
 void D_RemoveNextCharEvent();
 void D_ProcessEvents(void);
 void PostMouseMove(int x, int y);
+void PostMouseAbsolute(int x, int y);
 
 enum
 {

@@ -106,6 +106,7 @@ EXTERN_CVAR (String, language)
 EXTERN_CVAR (Bool, lookstrafe)
 EXTERN_CVAR (Bool, use_joystick)
 EXTERN_CVAR (Bool, use_mouse)
+EXTERN_CVAR (Bool, cl_lightgun)
 
 static int WheelDelta;
 extern bool CursorState;
@@ -595,7 +596,22 @@ void I_GetEvent ()
 	{
 		Keyboard->ProcessInput();
 	}
-	if (Mouse != NULL)
+	// [Lightgun] In lightgun mode, read absolute cursor position
+	// instead of using the normal mouse device
+	if (cl_lightgun)
+	{
+		POINT pt;
+		if (GetCursorPos(&pt) && ScreenToClient(mainwindow.GetHandle(), &pt))
+		{
+			int x = pt.x, y = pt.y;
+			if (screen != NULL)
+			{
+				screen->ScaleCoordsFromWindow(x, y);
+			}
+			PostMouseAbsolute(x, y);
+		}
+	}
+	else if (Mouse != NULL)
 	{
 		Mouse->ProcessInput();
 	}
