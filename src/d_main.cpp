@@ -198,6 +198,7 @@ EXTERN_CVAR (Float, m_yaw)
 EXTERN_CVAR (Bool, lookstrafe)
 EXTERN_CVAR (Int, screenblocks)
 EXTERN_CVAR (Bool, sv_cheats)
+EXTERN_CVAR (Bool, cl_lightgun)
 EXTERN_CVAR (Bool, sv_unlimited_pickup)
 EXTERN_CVAR (Bool, r_drawplayersprites)
 EXTERN_CVAR (Bool, show_messages)
@@ -2780,6 +2781,13 @@ static bool System_DispatchEvent(event_t* ev)
 
 	if (ev->type == EV_Mouse && menuactive == MENU_Off && ConsoleState != c_down && ConsoleState != c_falling && !primaryLevel->localEventManager->Responder(ev) && !paused)
 	{
+		// [Lightgun] Don't rotate the view from mouse input in lightgun mode
+		if (cl_lightgun)
+		{
+			// Let the event pass through to G_Responder where cursor position is captured
+			return false;
+		}
+
 		if (buttonMap.ButtonDown(Button_Mlook) || freelook)
 		{
 			int look = int(ev->y * m_pitch * 16.0);
