@@ -99,6 +99,8 @@ CVAR(Bool, cl_bloodsplats, true, CVAR_ARCHIVE)
 CVAR(Int, sv_smartaim, 0, CVAR_ARCHIVE | CVAR_SERVERINFO)
 CVAR(Bool, cl_doautoaim, false, CVAR_ARCHIVE)
 
+EXTERN_CVAR(Bool, cl_lightgun)
+
 static void CheckForPushSpecial(line_t *line, int side, AActor *mobj, DVector2 * posforwindowcheck = NULL);
 static void SpawnShootDecal(AActor *t1, AActor *defaults, const FTraceResults &trace);
 static void SpawnDeepSplash(AActor *t1, const FTraceResults &trace, AActor *puff);
@@ -4555,6 +4557,26 @@ struct aim_t
 DAngle P_AimLineAttack(AActor *t1, DAngle angle, double distance, FTranslatedLineTarget *pLineTarget, DAngle vrange,
 	int flags, AActor *target, AActor *friender)
 {
+	// [Lightgun] In lightgun mode, skip autoaim entirely — return cursor-derived pitch
+	if (cl_lightgun && t1->player != NULL)
+	{
+		usercmd_t *cmd = &t1->player->cmd;
+		if (cmd->cursor_x != 0 || cmd->cursor_y != 0)
+		{
+			double cy = cmd->cursor_y / 65535.0;
+			double fov = t1->player->FOV;
+			double aspectRatio = 16.0 / 9.0;
+			double vfov = fov / aspectRatio;
+			double pitchOffset = -cy * vfov;
+
+			if (pLineTarget)
+			{
+				memset(pLineTarget, 0, sizeof(*pLineTarget));
+			}
+			return t1->Angles.Pitch + DAngle::fromDeg(pitchOffset);
+		}
+	}
+
 	double shootz = t1->Center() - t1->Floorclip + t1->AttackOffset();
 
 	// can't shoot outside view angles
@@ -4680,6 +4702,31 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	DAngle pitch, int damage, FName damageType, PClassActor *pufftype, int flags, FTranslatedLineTarget*victim, int *actualdamage, 
 	double sz, double offsetforward, double offsetside)
 {
+	// [Lightgun] Override aim direction with cursor position
+	if (cl_lightgun && t1->player != NULL && !(flags & LAF_ISMELEEATTACK))
+	{
+		usercmd_t *cmd = &t1->player->cmd;
+		if (cmd->cursor_x != 0 || cmd->cursor_y != 0)
+		{
+			// Convert normalized cursor (-32768..32767) to -0.5..0.5 range
+			double cx = cmd->cursor_x / 65535.0;
+			double cy = cmd->cursor_y / 65535.0;
+
+			// Compute aim offset angles from cursor position using FOV
+			double fov = t1->player->FOV;
+			double aspectRatio = 16.0 / 9.0; // TODO: get actual aspect ratio
+
+			// Horizontal: cursor offset * FOV gives yaw offset
+			double yawOffset = cx * fov;
+			// Vertical: cursor offset * vertical FOV gives pitch offset
+			double vfov = fov / aspectRatio;
+			double pitchOffset = -cy * vfov; // negative because screen Y is inverted
+
+			angle = t1->Angles.Yaw + DAngle::fromDeg(yawOffset);
+			pitch = t1->Angles.Pitch + DAngle::fromDeg(pitchOffset);
+		}
+	}
+
 	if (t1->Level->localEventManager->WorldHitscanPreFired(t1, angle, distance, pitch, damage, damageType, pufftype, flags, sz, offsetforward, offsetside))
 	{
 		return nullptr;

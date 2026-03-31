@@ -121,6 +121,7 @@ CUSTOM_CVAR (Int, st_scale, 0, CVAR_ARCHIVE)
 
 EXTERN_CVAR(Float, hud_scalefactor)
 EXTERN_CVAR(Bool, hud_aspectscale)
+EXTERN_CVAR(Bool, cl_lightgun)
 
 CVAR (Bool, crosshairon, true, CVAR_ARCHIVE);
 CVAR (Int, crosshair, 0, CVAR_ARCHIVE)
@@ -1031,7 +1032,20 @@ void DBaseStatusBar::DrawCrosshair (double ticFrac)
 	int health = Scale(CPlayer->health, 100, CPlayer->mo->GetDefault()->health);
 
 	const double size = PrevCrosshairSize * (1.0 - ticFrac) + CrosshairSize * ticFrac;
-	ST_DrawCrosshair(health, viewwidth / 2 + viewwindowx, viewheight / 2 + viewwindowy, size);
+
+	// [Lightgun] Draw crosshair at cursor position instead of screen center
+	if (cl_lightgun)
+	{
+		usercmd_t *cmd = &CPlayer->cmd;
+		// Convert normalized cursor (-32768..32767) back to screen position
+		double cx = (cmd->cursor_x / 65535.0 + 0.5) * viewwidth + viewwindowx;
+		double cy = (cmd->cursor_y / 65535.0 + 0.5) * viewheight + viewwindowy;
+		ST_DrawCrosshair(health, cx, cy, size);
+	}
+	else
+	{
+		ST_DrawCrosshair(health, viewwidth / 2 + viewwindowx, viewheight / 2 + viewwindowy, size);
+	}
 }
 
 static void DrawCrosshair(DBaseStatusBar* self, double ticFrac)

@@ -230,6 +230,16 @@ EXTERN_CVAR (Bool, invertmousex)
 float 			mousex;
 float 			mousey; 		
 
+// [Lightgun] cursor aiming mode
+static float	lightgun_cursor_x;	// Absolute cursor X position (pixels)
+static float	lightgun_cursor_y;	// Absolute cursor Y position (pixels)
+
+CUSTOM_CVAR (Bool, cl_lightgun, false, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
+{
+	// When toggling, the input layer will pick up the change
+	// and switch between relative/absolute mouse modes
+}
+
 FString			savegamefile;
 FString			savedescription;
 
@@ -815,6 +825,19 @@ void G_BuildTiccmd (usercmd_t *cmd)
 	LocalViewAngle = 0;
 	LocalViewPitch = 0;
 
+	// [Lightgun] Pack normalized cursor position into command
+	if (cl_lightgun && viewwidth > 0 && viewheight > 0)
+	{
+		// Normalize cursor to -32768..32767 range (center = 0)
+		cmd->cursor_x = (short)clamp((int)((lightgun_cursor_x / (float)viewwidth - 0.5f) * 65535.f), -32768, 32767);
+		cmd->cursor_y = (short)clamp((int)((lightgun_cursor_y / (float)viewheight - 0.5f) * 65535.f), -32768, 32767);
+	}
+	else
+	{
+		cmd->cursor_x = 0;
+		cmd->cursor_y = 0;
+	}
+
 	// special buttons
 	if (sendturn180)
 	{
@@ -1125,6 +1148,17 @@ bool G_Responder (event_t *ev)
         {
             mousey = ev->y;
         }
+		// [Lightgun] In lightgun mode, the input layer sends absolute
+		// cursor position instead of relative deltas. Store it directly.
+		if (cl_lightgun)
+		{
+			// ev->x and ev->y carry absolute screen coordinates when
+			// lightgun mode is active (set by the input layer)
+			lightgun_cursor_x = ev->x;
+			lightgun_cursor_y = ev->y;
+			// Consume mouse input so it doesn't rotate the view
+			mousex = mousey = 0;
+		}
 		break;
 	}
 

@@ -202,6 +202,17 @@ void PostMouseMove(int xx, int yy)
 	}
 }
 
+// [Lightgun] Post absolute screen coordinates as a mouse event.
+// Unlike PostMouseMove, this bypasses sensitivity and inversion.
+void PostMouseAbsolute(int x, int y)
+{
+	event_t ev{};
+	ev.type = EV_Mouse;
+	ev.x = (float)x;
+	ev.y = (float)y;
+	D_PostEvent(&ev);
+}
+
 
 FInputEvent::FInputEvent(const event_t *ev)
 {
