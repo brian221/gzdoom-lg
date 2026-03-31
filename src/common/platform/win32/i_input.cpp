@@ -603,7 +603,7 @@ void I_GetEvent ()
 		POINT pt;
 		if (GetCursorPos(&pt) && ScreenToClient(mainwindow.GetHandle(), &pt))
 		{
-			int x = pt.x, y = pt.y;
+			int16_t x = (int16_t)pt.x, y = (int16_t)pt.y;
 			if (screen != NULL)
 			{
 				screen->ScaleCoordsFromWindow(x, y);
