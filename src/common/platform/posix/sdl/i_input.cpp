@@ -270,7 +270,10 @@ static void MouseRead ()
 		// Scale from window coordinates to screen coordinates
 		if (screen != NULL)
 		{
-			screen->ScaleCoordsFromWindow(x, y);
+			int16_t sx = (int16_t)x, sy = (int16_t)y;
+			screen->ScaleCoordsFromWindow(sx, sy);
+			x = sx;
+			y = sy;
 		}
 		PostMouseAbsolute(x, y);
 		return;
