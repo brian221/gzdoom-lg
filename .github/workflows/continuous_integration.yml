@@ -71,6 +71,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Install Dependencies
       shell: bash
@@ -82,7 +84,11 @@ jobs:
 
     - name: Git describe
       id: ghd
-      uses: proudust/gh-describe@v2
+      shell: bash
+      run: |
+        git fetch --tags --force || true
+        DESC=$(git describe --tags 2>/dev/null || echo "unknown-$(git rev-parse --short HEAD)")
+        echo "describe=$DESC" >> "$GITHUB_OUTPUT"
 
     - name: Configure
       shell: bash
