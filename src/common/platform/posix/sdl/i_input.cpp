@@ -290,9 +290,13 @@ static void I_CheckNativeMouse ()
 	bool captureModeInGame = sysCallbacks.CaptureModeInGame && sysCallbacks.CaptureModeInGame();
 	bool wantNative = !focus || (!use_mouse || GUICapture || !captureModeInGame);
 
-	// [Lightgun] Don't capture mouse in lightgun mode — we need absolute positioning
+	// [Lightgun] In lightgun mode, don't use relative mouse mode but keep
+	// processing input normally so buttons work
 	if (cl_lightgun && focus && !GUICapture)
-		wantNative = false; // Not native (we still want input), but don't use relative mode
+		wantNative = false;
+
+	if (!wantNative && sysCallbacks.WantNativeMouse && sysCallbacks.WantNativeMouse())
+		wantNative = true;
 
 	if (wantNative != NativeMouse)
 	{
@@ -302,21 +306,19 @@ static void I_CheckNativeMouse ()
 			I_ReleaseMouseCapture ();
 		else if (cl_lightgun)
 		{
-			// [Lightgun] Release relative mode but keep focus
+			// [Lightgun] Disable relative mode so we get absolute coords,
+			// but don't fully capture — show cursor for lightgun aiming
 			SDL_SetRelativeMouseMode (SDL_FALSE);
 			SDL_ShowCursor (SDL_TRUE);
 		}
 		else
 			I_SetMouseCapture ();
 	}
-	// [Lightgun] Ensure cursor is visible and relative mode is off
-	else if (cl_lightgun && !NativeMouse)
+	// [Lightgun] Ensure relative mode stays off while lightgun is active
+	else if (cl_lightgun && !NativeMouse && SDL_GetRelativeMouseMode())
 	{
-		if (SDL_GetRelativeMouseMode())
-		{
-			SDL_SetRelativeMouseMode (SDL_FALSE);
-			SDL_ShowCursor (SDL_TRUE);
-		}
+		SDL_SetRelativeMouseMode (SDL_FALSE);
+		SDL_ShowCursor (SDL_TRUE);
 	}
 }
 
