@@ -4706,6 +4706,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	if (cl_lightgun && t1->player != NULL && !(flags & LAF_ISMELEEATTACK))
 	{
 		usercmd_t *cmd = &t1->player->cmd;
+		Printf("Lightgun: cursor_x=%d cursor_y=%d lightgun_cx=%f cy=%f\n", cmd->cursor_x, cmd->cursor_y, cmd->cursor_x / 65535.0, cmd->cursor_y / 65535.0);
 		if (cmd->cursor_x != 0 || cmd->cursor_y != 0)
 		{
 			// Convert normalized cursor (-32768..32767) to -0.5..0.5 range

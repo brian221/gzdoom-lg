@@ -261,21 +261,20 @@ void I_CheckNativeMouse(bool preferNative, bool eventhandlerresult)
 	bool windowed = (screen == NULL) || !screen->IsFullscreen();
 	bool want_native;
 
-	// [Lightgun] In lightgun mode, show cursor and don't grab
+	// [Lightgun] In lightgun mode, keep mouse grabbed for button input
+	// but show the cursor. The actual position reading is handled in I_GetEvent.
 	if (cl_lightgun)
 	{
-		if (!NativeMouse)
+		if (NativeMouse && Mouse != NULL)
 		{
-			NativeMouse = false; // Not truly native, but ungrabbed
-			if (Mouse != NULL)
-			{
-				Mouse->Ungrab();
-			}
-			if (!mouse_shown)
-			{
-				ShowCursor(true);
-				mouse_shown = true;
-			}
+			NativeMouse = false;
+			Mouse->Grab();
+		}
+		// Show cursor so the lightgun/user can see where they're aiming
+		if (!mouse_shown)
+		{
+			ShowCursor(true);
+			mouse_shown = true;
 		}
 		return;
 	}

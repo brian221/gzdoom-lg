@@ -57,6 +57,7 @@ CVAR(Float, m_sensitivity_y, 2.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, invertmouse, false, CVAR_GLOBALCONFIG | CVAR_ARCHIVE);  // Invert mouse look down/up?
 CVAR(Bool, invertmousex, false,	CVAR_GLOBALCONFIG | CVAR_ARCHIVE);  // Invert mouse look left/right?
 CVAR (Bool, k_allowfullscreentoggle, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+EXTERN_CVAR(Bool, cl_lightgun)
 
 
 //==========================================================================
@@ -187,6 +188,11 @@ void D_PostEvent(event_t* ev)
 
 void PostMouseMove(int xx, int yy)
 {
+	// [Lightgun] Suppress relative mouse movement in lightgun mode —
+	// absolute position is posted separately via PostMouseAbsolute
+	if (cl_lightgun)
+		return;
+
 	event_t ev{};
 
 	ev.x = float(xx) * m_sensitivity_x;

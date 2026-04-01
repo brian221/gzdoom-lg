@@ -233,11 +233,28 @@ float 			mousey;
 // [Lightgun] cursor aiming mode
 static float	lightgun_cursor_x;	// Absolute cursor X position (pixels)
 static float	lightgun_cursor_y;	// Absolute cursor Y position (pixels)
+static float	lightgun_saved_autoaim = -1;	// Saved autoaim value before lightgun mode
+static bool		lightgun_saved_freelook = true;
 
-CUSTOM_CVAR (Bool, cl_lightgun, false, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
+EXTERN_CVAR(Float, autoaim)
+
+CUSTOM_CVAR (Bool, cl_lightgun, true, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
 {
-	// When toggling, the input layer will pick up the change
-	// and switch between relative/absolute mouse modes
+	if (self)
+	{
+		// Save current values and force lightgun-friendly settings
+		lightgun_saved_autoaim = autoaim;
+		lightgun_saved_freelook = freelook;
+		autoaim = 0;
+		freelook = true;
+	}
+	else if (lightgun_saved_autoaim >= 0)
+	{
+		// Restore previous values
+		autoaim = lightgun_saved_autoaim;
+		freelook = lightgun_saved_freelook;
+		lightgun_saved_autoaim = -1;
+	}
 }
 
 FString			savegamefile;

@@ -596,10 +596,14 @@ void I_GetEvent ()
 	{
 		Keyboard->ProcessInput();
 	}
-	// [Lightgun] In lightgun mode, read absolute cursor position
-	// instead of using the normal mouse device
+	// [Lightgun] In lightgun mode, let the mouse device process buttons normally,
+	// then also read absolute cursor position for aiming
 	if (cl_lightgun)
 	{
+		if (Mouse != NULL)
+		{
+			Mouse->ProcessInput(); // Process buttons through normal path
+		}
 		POINT pt;
 		if (GetCursorPos(&pt) && ScreenToClient(mainwindow.GetHandle(), &pt))
 		{
